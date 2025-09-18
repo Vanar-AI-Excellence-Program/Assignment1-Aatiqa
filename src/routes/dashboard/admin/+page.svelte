@@ -1,61 +1,140 @@
 <script lang="ts">
-  let isEditing = false;
-  let name = "Admin User";
-  let email = "admin@example.com";
-  let password = "********";
+  import type { PageData, ActionData } from './$types';
+  import { enhance } from '$app/forms';
 
+  export let data: PageData;
+  export let form: ActionData;
+
+  let isEditing = false;
+  let loading = false;
+  
+
+  // Current values
+  let name = data.admin.name;
+  let email = data.admin.email;
+  let password = "********"; // Always show placeholder for password
+  let joinedDate = new Date(data.admin.createdAt).toLocaleDateString();
+
+  // Temp values for editing
   let tempName = name;
   let tempEmail = email;
-  let tempPassword = password;
+  let tempPassword=password;
 
   function handleEdit() {
     isEditing = true;
     tempName = name;
     tempEmail = email;
-    tempPassword = password;
+    tempPassword = ""; // Clear password field for new input
   }
 
-  function handleSave() {
+  function handleCancel() {
+    isEditing = false;
+    tempName = name;
+    tempEmail = email;
+    tempPassword = "";
+  }
+
+
+  // When server form returns success
+  $: if (form?.success) {
     name = tempName;
     email = tempEmail;
-    password = tempPassword;
+    // Password remains as placeholder - don't update it
     isEditing = false;
-    // Here you would typically send the updated data to your backend
   }
 </script>
 
-<div >
-  <div class="admin-profile-rectangle">
+<div class="admin-profile-rectangle">
+  <div class="admin-header">
     <h1 class="admin-title">Admin Profile 👑</h1>
+    <a href="/logout" class="logout-btn">Logout</a>
+  </div>
+
+  {#if form?.success}
+    <div class="success-message">
+      <p>{form.message}</p>
+    </div>
+  {/if}
+  {#if form?.error}
+    <div class="error-message">
+      <p>{form.error}</p>
+    </div>
+  {/if}
+
+  <form
+    method="POST"
+    action="?/updateProfile"
+    use:enhance={() => {
+      loading = true;
+      return async ({ update }) => {
+        await update();
+        loading = false;
+      };
+    }}
+  >
     <div class="admin-dialogue-box">
       <h2>Name</h2>
       {#if isEditing}
-        <input class="admin-input-field" type="text" bind:value={tempName} />
+        <input class="admin-input-field" type="text" name="name" bind:value={tempName} required />
       {:else}
         <p>{name}</p>
       {/if}
     </div>
+
     <div class="admin-dialogue-box">
       <h2>Email</h2>
       {#if isEditing}
-        <input class="admin-input-field" type="email" bind:value={tempEmail} />
+        <input class="admin-input-field" type="email" name="email" bind:value={tempEmail} required />
       {:else}
         <p>{email}</p>
       {/if}
     </div>
-    <div class="admin-dialogue-box">
-      <h2>Password</h2>
-      {#if isEditing}
-        <input class="admin-input-field" type="password" bind:value={tempPassword} />
-      {:else}
-        <p>{password}</p>
-      {/if}
-    </div>
-    <button class="admin-edit-btn" on:click={isEditing ? handleSave : handleEdit}>
-      {isEditing ? 'Save' : 'Edit'}
+
+     <div class="admin-dialogue-box">
+       <h2>Password</h2>
+       {#if isEditing}
+         <input
+           class="admin-input-field" 
+           type="password" 
+           name="password" 
+           bind:value={tempPassword} 
+           placeholder="Enter new password (leave empty to keep current)"
+           autocomplete="new-password" 
+         />
+       {:else}
+         <p>{password}</p>
+       {/if}
+     </div>
+
+    {#if isEditing}
+      <div class="button-group">
+        <button type="submit" class="admin-edit-btn save-btn" disabled={loading}>
+          {loading ? 'Saving...' : 'Save'}
+        </button>
+        <button type="button" class="admin-edit-btn cancel-btn" on:click={handleCancel}>
+          Cancel
+        </button>
+      </div>
+    {/if}
+  </form>
+
+  {#if !isEditing}
+    <button 
+      type="button" 
+      class="admin-edit-btn" 
+      on:click={() => {
+        isEditing = true;
+        tempName = name;
+        tempEmail = email;
+        tempPassword = "";
+      }}
+    >
+      Edit
     </button>
-  </div>
+  {/if}
 </div>
+
+
 <style>
   .admin-dashboard-container {
     min-height: 65vh;
@@ -87,19 +166,45 @@
     /* Center the container horizontally and vertically */
     margin: auto;
   }
+  .admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.2rem;
+  }
+
   .admin-title {
     font-size: 2rem;
     font-weight: 700;
-    margin-bottom: 1.2rem;
+    margin: 0;
     color: #333;
+    flex: 1;
     text-align: center;
+  }
+
+  .logout-btn {
+    background: #dc3545;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background 0.2s;
+    border: none;
+    cursor: pointer;
+  }
+
+  .logout-btn:hover {
+    background: #c82333;
   }
   .admin-dialogue-box {
     background: #f5f5f7;
     border-radius: 1rem;
+    border: 1px solid rgba(34, 21, 21, 0.04);
     padding: 1.2rem 1rem 0.8rem 1rem;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    margin-bottom: 0;
+    margin-bottom: 1rem; /* Added space between dialogue boxes */
     display: flex;
     flex-direction: column;
     gap: 0.3rem;
@@ -127,7 +232,10 @@
     margin-top: 0.1rem;
   }
   .admin-edit-btn {
-    margin-top: 1.2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 1.2rem auto 0 auto;
     padding: 0.7rem 0;
     border: none;
     border-radius: 0.7rem;
@@ -138,9 +246,59 @@
     cursor: pointer;
     transition: background 0.18s;
     letter-spacing: 0.03em;
+    text-align: center;
+    width: 60%; /* or adjust as needed for your layout */
   }
   .admin-edit-btn:hover {
     background: #4b2fcf;
+  }
+
+  .button-group {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+  }
+
+  .save-btn {
+    background: #28a745;
+  }
+
+  .save-btn:hover {
+    background: #218838;
+  }
+
+  .save-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+  }
+
+  .cancel-btn {
+    background: #6c757d;
+  }
+
+  .cancel-btn:hover {
+    background: #545b62;
+  }
+
+  .success-message {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    border-radius: 0.5rem;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+
+  .error-message {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    border-radius: 0.5rem;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    text-align: center;
   }
   @media (max-width: 900px) {
     .admin-dashboard-container {

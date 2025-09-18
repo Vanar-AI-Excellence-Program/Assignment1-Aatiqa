@@ -2,18 +2,14 @@
   let menuItems = [
     { name: "My Profile", path: "/dashboard/admin/" },
     { name: "Users Info", path: "/dashboard/admin/users" },
-    { name: "User Insights", path: "/dashboard/admin/insights" },
     { name: "Settings", path: "/dashboard/admin/settings" }
   ];
 </script>
 
 <style>
   .admin-layout-container {
-    /* Height: from below navbar (64px) to just above footer (do not include footer in height) */
-    min-height: 70vh; /* Add extra space (40px) to ensure gap above footer */
-    height: auto;
+    height: calc(85vh - 104px); /* Full height minus navbar (64px) and footer space (40px) */
     margin-top: 64px; /* height of navbar */
-    margin-bottom: 40px; /* Increased space above the footer */
     width: 100vw;
     max-width: 1200px; /* scale width, adjust as needed */
     margin-left: auto;
@@ -21,6 +17,8 @@
     display: flex;
     background: transparent;
     box-sizing: border-box;
+    overflow: hidden; /* Prevent scrolling at layout level */
+   
   }
   @media (max-width: 1300px) {
     .admin-layout-container {
@@ -74,16 +72,17 @@
     background: #f5f5f7;
     border-radius: 0 1.2rem 1.2rem 0;
     min-width: 0;
-    overflow-x: auto;
+    overflow: hidden; /* Prevent overflow in main content */
+    display: flex;
+    flex-direction: column;
   }
   @media (max-width: 900px) {
     .admin-layout-container {
       flex-direction: column;
-      min-height: unset;
-      height: unset;
+      height: calc(100vh - 84px); /* Maintain fixed height on mobile */
       margin-top: 56px;
-      margin-bottom: 28px; /* Increased space above the footer on mobile too */
       max-width: 100vw;
+      overflow: hidden; /* Ensure no scrolling on mobile */
     }
     .admin-sidebar {
       width: 100vw;

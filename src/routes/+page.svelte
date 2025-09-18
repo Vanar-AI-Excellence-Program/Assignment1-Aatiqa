@@ -30,9 +30,9 @@
             margin-left: {idx === 0 ? '0' : idx === 1 ? '24px' : '24px'};
             margin-right: {idx === 2 ? '0' : '0'};
             transform: none;
-            {card === 'center' ? "background-image: url('/src/lib/assets/secure.svg'); background-size: 100% 100%; background-position: center; background-repeat: no-repeat;" : ''}
-            {card === 'left' ? "background-image: url('/src/lib/assets/left.svg'); background-size: 100% 100%; background-position:left; background-repeat: no-repeat; background-color: white;" : ''}
-            {card === 'right' ? "background-image: url('/src/lib/assets/insight.svg'); background-size: 100% 100%; background-position: center; background-repeat: no-repeat;" : ''}
+            {card === 'center' ? "background-image: url('/secure.svg'); background-size: 100% 100%; background-position: center; background-repeat: no-repeat;" : ''}
+            {card === 'left' ? "background-image: url('/left.svg'); background-size: 100% 100%; background-position:left; background-repeat: no-repeat; background-color: white;" : ''}
+            {card === 'right' ? "background-image: url('/insight.svg'); background-size: 100% 100%; background-position: center; background-repeat: no-repeat;" : ''}
           "
           on:mouseenter={() => hoveredIdx = idx}
           on:mouseleave={() => hoveredIdx = null}
@@ -52,7 +52,7 @@
 
 <style>
   :global(html), :global(body) {
-    background: url('/src/lib/assets/background.svg') no-repeat center center fixed !important;
+    background: url('/background.svg') no-repeat center center fixed !important;
     background-size: cover !important;
     overflow: hidden !important;
     width: 100vw !important;
@@ -144,14 +144,14 @@
 
   /* Secure image background for center card */
    .secure-bg {
-    background-image: url('/src/lib/assets/safesign.svg');
+    background-image: url('/safesign.svg');
     position: relative;
     z-index: 0;
     } 
     
 
   .center-front {
-    box-shadow: 0 12px 40px 0 rgba(80, 0, 120, 0.25), 0 2px 8px 0 rgba(80, 0, 120, 0.10);
+    box-shadow: 0 12px 40px 0 rgba(12, 12, 12, 0.25), 0 2px 8px 0 rgba(80, 0, 120, 0.10);
     background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
     border: 2.5px solid #a084e8;
     z-index: 2;

@@ -9,14 +9,14 @@
 <nav class="navbar">
   <div class="navbar-content">
     <div class="app-name">
-      <img src="/src/lib/assets/safesign.svg" alt="App Logo" class="app-logo" />
+      <img src="/safesign.svg" alt="App Logo" class="app-logo" />
       <span class="app-title">Auth-App</span>
      
     </div>
     <ul>
       <li class="nav-icon">
         <a href="/" class={$page.url.pathname === '/' ? 'active' : ''}>
-          <img src="/src/lib/assets/home.svg" alt="Home" class="icon-img" />
+          <img src="/home.svg" alt="Home" class="icon-img" />
           {#if $isHome}
             <span class="icon-label neon-purple icon-label-visible">Home</span>
           {:else}
@@ -25,8 +25,8 @@
         </a>
       </li>
       <li class="nav-icon">
-        <a href="/dashboard/user" class={$page.url.pathname.startsWith('/dashboard') ? 'active' : ''}>
-          <img src="/src/lib/assets/dashboard.svg" alt="Dashboard" class="icon-img" />
+        <a href="/dashboard" class={$page.url.pathname.startsWith('/dashboard') ? 'active' : ''}>
+          <img src="/dashboard.svg" alt="Dashboard" class="icon-img" />
           {#if $page.url.pathname.startsWith('/dashboard')}
             <span class="icon-label neon-purple icon-label-visible">Dashboard</span>
           {:else}
@@ -36,7 +36,7 @@
       </li>
       <li class="nav-icon">
         <a href="/signup" class={$page.url.pathname === '/signup' ? 'active' : ''}>
-          <img src="/src/lib/assets/signup.svg" alt="Signup" class="icon-img" />
+          <img src="/signup.svg" alt="Signup" class="icon-img" />
           {#if $page.url.pathname === '/signup'}
             <span class="icon-label neon-purple icon-label-visible">Signup</span>
           {:else}
@@ -56,7 +56,7 @@
     width: 100vw;
     min-width: 100vw;
     z-index: 1000;
-    background: #333;
+    background: #22223b;
     padding: 0.5rem 0;
     box-sizing: border-box;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);

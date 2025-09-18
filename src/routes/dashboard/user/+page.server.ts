@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
   const sessionToken = cookies.get('session');
   
   if (!sessionToken) {
-    throw redirect(303, '/signup/login');
+    throw redirect(303, '/signup');
   }
 
   try {
@@ -23,15 +23,15 @@ export const load: PageServerLoad = async ({ cookies }) => {
       .limit(1);
 
     if (sessionResult.length === 0) {
-      // Invalid session, redirect to login
+      // Invalid session, redirect to signup
       cookies.delete('session', { path: '/' });
-      throw redirect(303, '/signup/login');
+      throw redirect(303, '/signup');
     }
 
     const userId = sessionResult[0].userId;
 
     if (!userId) {
-      throw redirect(303, '/signup/login');
+      throw redirect(303, '/signup');
     }
 
     // Get user data from the users table
@@ -49,9 +49,9 @@ export const load: PageServerLoad = async ({ cookies }) => {
       .limit(1);
 
     if (userResult.length === 0) {
-      // User not found, redirect to login
+      // User not found, redirect to signup
       cookies.delete('session', { path: '/' });
-      throw redirect(303, '/signup/login');
+      throw redirect(303, '/signup');
     }
 
     return {
@@ -66,8 +66,8 @@ export const load: PageServerLoad = async ({ cookies }) => {
       throw err;
     }
     
-    // For other errors, redirect to login
-    throw redirect(303, '/signup/login');
+    // For other errors, redirect to signup
+    throw redirect(303, '/signup');
   }
 };
 
@@ -76,7 +76,7 @@ export const actions: Actions = {
     const sessionToken = cookies.get('session');
     
     if (!sessionToken) {
-      throw redirect(303, '/signup/login');
+      throw redirect(303, '/signup');
     }
 
     try {
@@ -90,13 +90,13 @@ export const actions: Actions = {
         .limit(1);
 
       if (sessionResult.length === 0) {
-        throw redirect(303, '/signup/login');
+        throw redirect(303, '/signup');
       }
 
       const userId = sessionResult[0].userId;
 
       if (!userId) {
-        throw redirect(303, '/signup/login');
+        throw redirect(303, '/signup');
       }
 
       // Get form data

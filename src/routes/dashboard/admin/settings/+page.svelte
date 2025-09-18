@@ -88,6 +88,7 @@
             {user.status}
           </span>
           <div class="user-actions">
+          
             <!-- Activate Button -->
             <form 
               method="POST" 

@@ -3,9 +3,6 @@
   let hoveredIdx: number | null = null;
 </script>
 
-<!--
-  Center the containers both vertically and horizontally in the viewport.
--->
 <div class="centered-viewport">
   <div class="carousel-outer-centered">
     <div class="container-row-centered">
@@ -59,11 +56,9 @@
     height: 100vh !important;
     max-width: 100vw !important;
     max-height: 100vh !important;
-    /* Prevent scroll on mobile overscroll */
     overscroll-behavior: none !important;
   }
 
-  /* Center everything in the viewport */
   .centered-viewport {
     min-height: 100vh;
     min-width: 100vw;
@@ -128,7 +123,7 @@
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    /* Remove align-items: center; from previous version */
+    
   }
 
   .container-content-bottom {
@@ -137,12 +132,10 @@
     justify-content: center;
     align-items: flex-end;
     padding-bottom: 1.5rem;
-    /* Ensures the text is at the bottom with some padding */
     box-sizing: border-box;
     flex: 0 0 auto;
   }
 
-  /* Secure image background for center card */
    .secure-bg {
     background-image: url('/safesign.svg');
     position: relative;
@@ -151,7 +144,7 @@
     
 
   .center-front {
-    box-shadow: 0 12px 40px 0 rgba(12, 12, 12, 0.25), 0 2px 8px 0 rgba(80, 0, 120, 0.10);
+    box-shadow: 0 12px 40px 0 rgba(80, 0, 120, 0.25), 0 2px 8px 0 rgba(80, 0, 120, 0.10);
     background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
     border: 2.5px solid #a084e8;
     z-index: 2;
@@ -174,7 +167,7 @@
     box-shadow: 0 2px 8px 0 rgba(80, 0, 120, 0.08);
     border: 2.5px solid #d1c4e9;
   }
-  /* Neon effect for any card when hovered */
+
   .neon-front {
     box-shadow:
       0 0 16px 4px #a084e8,
@@ -188,7 +181,7 @@
     filter: none;
     transition: box-shadow 0.4s, border 0.3s, filter 0.3s, opacity 0.3s;
   }
-  /* Dim/blur for non-hovered cards when any card is hovered */
+  
   .side-dim {
     filter: blur(1px) brightness(0.85);
     opacity: 0.6;
@@ -196,13 +189,12 @@
     transition: filter 0.3s, opacity 0.3s;
   }
   .hovered-effect {
-    /* Retain for other cards if needed */
     box-shadow: 0 8px 24px 0 rgba(80, 0, 120, 0.13);
     border-color: #a084e8;
     filter: brightness(1.05) blur(0.5px);
     opacity: 1;
   }
-  /* Changed text size for the container titles */
+  
   .container-title {
     font-size: 1.5rem;
     color: #333;
@@ -214,8 +206,6 @@
     padding: 0 1rem;
     text-align: center;
     line-height: 1.1;
-    /* Add a subtle background for readability if needed */
-    /* background: rgba(255,255,255,0.7); */
     width: 100%;
   }
   @media (max-width: 900px) {

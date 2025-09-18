@@ -1,12 +1,14 @@
 <script lang="ts">
   import type { PageData, ActionData } from './$types';
   import { enhance } from '$app/forms';
+  import { browser } from '$app/environment';
 
   export let data: PageData;
   export let form: ActionData;
 
   let isEditing = false;
   let loading = false;
+  let showMessage = false;
   
 
   // Current values
@@ -35,11 +37,18 @@
   }
 
 
+  // Auto-hide success/error messages after 2 seconds
+  $: if (browser && (form?.success || form?.error)) {
+    showMessage = true;
+    setTimeout(() => {
+      showMessage = false;
+    }, 2000);
+  }
+
   // When server form returns success
   $: if (form?.success) {
     name = tempName;
     email = tempEmail;
-    // Password remains as placeholder - don't update it
     isEditing = false;
   }
 </script>
@@ -50,13 +59,13 @@
     <a href="/logout" class="logout-btn">Logout</a>
   </div>
 
-  {#if form?.success}
-    <div class="success-message">
+  {#if form?.success && showMessage}
+    <div class="success-message auto-hide" class:fade-out={!showMessage}>
       <p>{form.message}</p>
     </div>
   {/if}
-  {#if form?.error}
-    <div class="error-message">
+  {#if form?.error && showMessage}
+    <div class="error-message auto-hide" class:fade-out={!showMessage}>
       <p>{form.error}</p>
     </div>
   {/if}
@@ -147,7 +156,6 @@
     overflow: hidden;
     width: 100%;
     max-width: 100vw;
-    /* Added border to the container */
     border: 2px solid #6c47ff;
     box-sizing: border-box;
   }
@@ -163,7 +171,6 @@
     flex-direction: column;
     align-items: stretch;
     gap: 1.5rem;
-    /* Center the container horizontally and vertically */
     margin: auto;
   }
   .admin-header {
@@ -204,7 +211,7 @@
     border: 1px solid rgba(34, 21, 21, 0.04);
     padding: 1.2rem 1rem 0.8rem 1rem;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    margin-bottom: 1rem; /* Added space between dialogue boxes */
+    margin-bottom: 1rem;
     display: flex;
     flex-direction: column;
     gap: 0.3rem;
@@ -247,7 +254,7 @@
     transition: background 0.18s;
     letter-spacing: 0.03em;
     text-align: center;
-    width: 60%; /* or adjust as needed for your layout */
+    width: 60%; 
   }
   .admin-edit-btn:hover {
     background: #4b2fcf;
@@ -299,6 +306,14 @@
     padding: 0.8rem;
     margin-bottom: 1rem;
     text-align: center;
+  }
+
+  .auto-hide {
+    transition: opacity 0.3s ease-out;
+  }
+
+  .fade-out {
+    opacity: 0;
   }
   @media (max-width: 900px) {
     .admin-dashboard-container {

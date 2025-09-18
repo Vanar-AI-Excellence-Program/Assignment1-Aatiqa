@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { db } from '$lib/db';
 import { users } from '../../db/schema';
 import { createSession } from '$lib/session';
+import { getGoogleAuthUrl, getGitHubAuthUrl } from '$lib/auth';
 import type { Actions, RequestEvent } from '@sveltejs/kit';
 
 export const actions: Actions = {
@@ -151,6 +152,60 @@ export const actions: Actions = {
         error: 'Something went wrong. Please try again.',
         name,
         email
+      });
+    }
+  },
+
+  googleSignup: async () => {
+    try {
+      // Generate Google OAuth URL
+      const googleAuthUrl = getGoogleAuthUrl();
+      // Redirect to Google OAuth
+      throw redirect(303, googleAuthUrl);
+    } catch (error: any) {
+      // If it's a redirect, re-throw it (this is normal SvelteKit behavior)
+      if (error?.status === 303) {
+        throw error;
+      }
+      
+      console.error('Google signup error:', error);
+      
+      // Check if it's a missing environment variable error
+      if (error.message?.includes('environment variable')) {
+        return fail(500, {
+          error: 'Google OAuth is not configured. Please check server configuration.'
+        });
+      }
+      
+      return fail(500, {
+        error: `Failed to initiate Google signup: ${error.message || 'Unknown error'}`
+      });
+    }
+  },
+
+  githubSignup: async () => {
+    try {
+      // Generate GitHub OAuth URL
+      const githubAuthUrl = getGitHubAuthUrl();
+      // Redirect to GitHub OAuth
+      throw redirect(303, githubAuthUrl);
+    } catch (error: any) {
+      // If it's a redirect, re-throw it (this is normal SvelteKit behavior)
+      if (error?.status === 303) {
+        throw error;
+      }
+      
+      console.error('GitHub signup error:', error);
+      
+      // Check if it's a missing environment variable error
+      if (error.message?.includes('environment variable')) {
+        return fail(500, {
+          error: 'GitHub OAuth is not configured. Please check server configuration.'
+        });
+      }
+      
+      return fail(500, {
+        error: `Failed to initiate GitHub signup: ${error.message || 'Unknown error'}`
       });
     }
   }

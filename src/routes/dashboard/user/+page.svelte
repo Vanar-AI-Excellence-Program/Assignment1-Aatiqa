@@ -1,12 +1,14 @@
 <script lang="ts">
   import type { PageData, ActionData } from './$types';
   import { enhance } from '$app/forms';
+  import { browser } from '$app/environment';
 
   export let data: PageData;
   export let form: ActionData;
 
   let isEditing = false;
   let loading = false;
+  let showMessage = false;
   
   // Get user data from server
   let name = data.user.name;
@@ -34,6 +36,14 @@
   }
 
   // Update local state when form submission succeeds
+  // Auto-hide success/error messages after 2 seconds
+  $: if (browser && (form?.success || form?.error)) {
+    showMessage = true;
+    setTimeout(() => {
+      showMessage = false;
+    }, 2000);
+  }
+
   $: if (form?.success) {
     name = tempName;
     email = tempEmail;
@@ -55,15 +65,15 @@
 <div class="center-container">
   <div class="profile-rectangle">
     <!-- Success/Error Messages -->
-    {#if form?.success}
-      <div class="message success-message">
+    {#if form?.success && showMessage}
+      <div class="message success-message auto-hide" class:fade-out={!showMessage}>
         <i class="icon">✓</i>
         {form.message}
       </div>
     {/if}
 
-    {#if form?.error}
-      <div class="message error-message">
+    {#if form?.error && showMessage}
+      <div class="message error-message auto-hide" class:fade-out={!showMessage}>
         <i class="icon">⚠</i>
         {form.error}
       </div>
@@ -275,6 +285,14 @@
     background: #f8d7da;
     color: #721c24;
     border: 1px solid #f5c6cb;
+  }
+
+  .auto-hide {
+    transition: opacity 0.3s ease-out;
+  }
+
+  .fade-out {
+    opacity: 0;
   }
 
   .icon {

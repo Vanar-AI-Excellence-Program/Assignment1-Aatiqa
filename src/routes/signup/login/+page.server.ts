@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { db } from '$lib/db';
 import { users, admin } from '../../../db/schema';
 import { createSession } from '$lib/session';
+import { getGoogleAuthUrl, getGitHubAuthUrl } from '$lib/auth';
 import type { Actions, RequestEvent } from '@sveltejs/kit';
 
 export const actions: Actions = {
@@ -87,6 +88,21 @@ export const actions: Actions = {
     }
 
     const user = normalUser[0];
+    
+    // Check if user signed up with OAuth
+    if (user.password === 'oauth_google') {
+      return fail(400, {
+        error: 'Please use "Continue with Google" to sign in.',
+        email
+      });
+    }
+    if (user.password === 'oauth_github') {
+      return fail(400, {
+        error: 'This account was created with GitHub. Please use "Continue with GitHub" to sign in.',
+        email
+      });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
@@ -107,5 +123,53 @@ export const actions: Actions = {
     await createSession(user.id, cookies);
     // Redirect to user dashboard
     throw redirect(303, '/dashboard/user');
+  },
+
+  googleLogin: async ({ cookies }) => {
+    try {
+      if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+        return fail(500, {
+          error: 'Google OAuth is not configured. Please contact support.'
+        });
+      }
+
+      const authUrl = getGoogleAuthUrl('login');
+      throw redirect(303, authUrl);
+    } catch (error: any) {
+      console.error('Google login error:', error);
+      
+      // If it's already a redirect, re-throw it
+      if (error?.status === 303) {
+        throw error;
+      }
+      
+      return fail(500, {
+        error: 'Failed to initiate Google login. Please try again.'
+      });
+    }
+  },
+
+  githubLogin: async ({ cookies }) => {
+    try {
+      if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
+        return fail(500, {
+          error: 'GitHub OAuth is not configured. Please contact support.'
+        });
+      }
+
+      const authUrl = getGitHubAuthUrl('login');
+      throw redirect(303, authUrl);
+    } catch (error: any) {
+      console.error('GitHub login error:', error);
+      
+      // If it's already a redirect, re-throw it
+      if (error?.status === 303) {
+        throw error;
+      }
+      
+      return fail(500, {
+        error: 'Failed to initiate GitHub login. Please try again.'
+      });
+    }
   }
 };

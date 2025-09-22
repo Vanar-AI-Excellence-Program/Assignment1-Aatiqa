@@ -34,6 +34,15 @@ A comprehensive authentication and authorization system built with SvelteKit, Ty
 - **Email Resend** - Users can request new verification emails
 - **Security** - 24-hour verification token expiration, 1-hour password reset token expiration
 
+### AI Chat Features
+- **Floating Chat Widget** - Always-accessible AI assistant in bottom-right corner
+- **Real-time Streaming** - Live AI responses powered by Google Gemini API
+- **Modern Chat UI** - Beautiful message bubbles with user messages in dark blue and AI responses in light grey
+- **Scrollable Chat** - Smooth scrolling through conversation history
+- **Auto-scroll** - Automatically scrolls to new messages
+- **Chat Controls** - Clear chat history and close chat functionality
+- **Responsive Design** - Works perfectly on desktop and mobile devices
+
 ### UI/UX Features
 - **Modern Design** - Clean, responsive interface with custom styling
 - **Consistent Color Scheme** - Unified design across all pages
@@ -54,6 +63,7 @@ A comprehensive authentication and authorization system built with SvelteKit, Ty
 - **OAuth**: Google and GitHub OAuth integration
 - **Email Service**: Nodemailer with SMTP support
 - **Session Management**: Secure HTTP-only cookies
+- **AI Integration**: Google Gemini API with Vercel AI SDK
 - **Containerization**: Docker & Docker Compose
 
 ## 📁 Project Structure
@@ -66,12 +76,18 @@ Auth-App/
 │   ├── lib/
 │   │   ├── components/
 │   │   │   ├── Footer.svelte      # Footer component
-│   │   │   └── Navbar.svelte      # Navigation bar
+│   │   │   ├── Navbar.svelte      # Navigation bar
+│   │   │   ├── FloatingChatWidget.svelte # AI chat floating widget
+│   │   │   ├── ChatContainer.svelte      # Chat messages container
+│   │   │   ├── ChatMessage.svelte        # Individual chat message component
+│   │   │   └── ChatInput.svelte          # Chat input field component
 │   │   ├── auth.ts                # OAuth utility functions
 │   │   ├── db.ts                  # Database connection utility
 │   │   ├── email.ts               # Email service and templates
 │   │   └── session.ts             # Session management utilities
 │   ├── routes/
+│   │   ├── api/
+│   │   │   └── chat/              # AI chat API endpoint
 │   │   ├── auth/
 │   │   │   ├── callback/          # OAuth callback handlers
 │   │   │   │   ├── google/        # Google OAuth callback
@@ -178,6 +194,9 @@ Auth-App/
    SMTP_SECURE=false
    SMTP_USER=your-email@gmail.com
    SMTP_PASS=your-app-password
+   
+   # AI Chat (optional)
+   GEMINI_API_KEY=your-gemini-api-key-here
    ```
 
 4. **Start PostgreSQL database**
@@ -372,6 +391,9 @@ Auth-App/
 - `GET /dashboard/admin/settings` - Get users for status management
 - `POST /dashboard/admin/settings` - Update user status
 
+### AI Chat
+- `POST /api/chat` - AI chat endpoint with streaming responses
+
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -384,12 +406,36 @@ Auth-App/
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## 🚀 AI Chat Setup
+
+To enable the AI chat functionality:
+
+1. **Get a Gemini API Key**:
+   - Visit [Google AI Studio](https://aistudio.google.com/app/apikey)
+   - Sign in with your Google account
+   - Click "Create API Key"
+   - Copy the generated API key
+
+2. **Add to Environment**:
+   ```env
+   GEMINI_API_KEY=your-gemini-api-key-here
+   ```
+
+3. **Restart the Server**:
+   ```bash
+   npm run dev
+   ```
+
+The AI chat widget will appear as a floating button in the bottom-right corner of your application. Click it to start chatting with the AI assistant!
+
 ## 🙏 Acknowledgments
 
 - SvelteKit team for the amazing framework
 - Drizzle team for the excellent ORM
 - PostgreSQL community for the robust database system
+- Google AI team for the Gemini API
+- Vercel team for the AI SDK
 
 ---
 
-**Made with ❤️ using SvelteKit and TypeScript**
+**Made with ❤️ using SvelteKit, TypeScript, and AI**

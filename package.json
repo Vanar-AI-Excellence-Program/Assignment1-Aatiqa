@@ -32,9 +32,11 @@
 		"vite": "^7.0.4"
 	},
 	"dependencies": {
+		"@ai-sdk/google": "^2.0.15",
 		"@auth/sveltekit": "^1.10.0",
 		"@types/bcryptjs": "^2.4.6",
 		"@types/nodemailer": "^7.0.1",
+		"ai": "^5.0.48",
 		"bcrypt": "^6.0.0",
 		"bcryptjs": "^3.0.2",
 		"drizzle-orm": "^0.44.5",

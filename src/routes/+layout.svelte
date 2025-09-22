@@ -2,6 +2,7 @@
   import "../app.css";
   import Navbar from "$lib/components/Navbar.svelte";
   import Footer from "$lib/components/Footer.svelte";
+  import FloatingChatWidget from "$lib/components/FloatingChatWidget.svelte";
 </script>
 
 <svelte:head>
@@ -13,3 +14,6 @@
 <slot />  <!-- Child pages will render here -->
 
 <Footer />
+
+<!-- Floating AI Chat Widget -->
+<FloatingChatWidget />

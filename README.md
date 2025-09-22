@@ -9,6 +9,7 @@ A comprehensive authentication and authorization system built with SvelteKit, Ty
 - **Email Verification** - Required email verification for all new accounts
 - **OAuth Integration** - Google and GitHub OAuth with email verification
 - **Password Security** - Bcrypt hashing for password protection
+- **Password Reset** - Secure password reset via email with 1-hour token expiration
 - **Session Management** - HTTP-only cookie-based sessions with secure tokens
 - **Role-Based Access Control** - Separate dashboards for users and administrators
 - **Account Status Management** - Active/inactive user account control with automatic session termination
@@ -29,8 +30,9 @@ A comprehensive authentication and authorization system built with SvelteKit, Ty
 ### Email System
 - **Verification Emails** - Beautiful HTML email templates with provider branding
 - **Welcome Emails** - Sent after successful email verification
+- **Password Reset Emails** - Secure password reset links with professional design
 - **Email Resend** - Users can request new verification emails
-- **Security** - 24-hour token expiration and cryptographically secure tokens
+- **Security** - 24-hour verification token expiration, 1-hour password reset token expiration
 
 ### UI/UX Features
 - **Modern Design** - Clean, responsive interface with custom styling
@@ -76,7 +78,9 @@ Auth-App/
 │   │   │   │   └── github/        # GitHub OAuth callback
 │   │   │   ├── verify-email/      # Email verification handler
 │   │   │   ├── verification-pending/ # Verification pending page
-│   │   │   └── resend-verification/  # Resend verification email
+│   │   │   ├── resend-verification/  # Resend verification email
+│   │   │   ├── forgot-password/   # Password reset request page
+│   │   │   └── reset-password/    # Password reset form page
 │   │   ├── dashboard/
 │   │   │   ├── admin/             # Admin dashboard routes
 │   │   │   │   ├── users/         # User management page
@@ -108,7 +112,9 @@ Auth-App/
 - `status` - Account status (active/inactive)
 - `emailVerified` - Email verification status (boolean)
 - `verificationToken` - Email verification token
-- `verificationExpires` - Token expiration timestamp
+- `verificationExpires` - Email verification token expiration timestamp
+- `passwordResetToken` - Password reset token
+- `passwordResetExpires` - Password reset token expiration timestamp
 - `createdAt` - Registration timestamp
 - `updatedAt` - Last modification timestamp
 
@@ -240,6 +246,17 @@ Auth-App/
 6. Session is created based on user type (admin/user)
 7. User is redirected to appropriate dashboard
 
+### Password Reset Flow
+1. User clicks "Forgot your password?" on login page
+2. User enters email address on forgot password page
+3. System validates email exists and is verified
+4. Password reset token is generated (1-hour expiration)
+5. Secure reset email is sent with professional HTML template
+6. User clicks reset link in email
+7. User enters new password with confirmation
+8. Password is hashed and updated, token is cleared
+9. User is redirected to login page with success message
+
 ### Session Management
 - Sessions use secure, HTTP-only cookies
 - Tokens are randomly generated 64-character hex strings
@@ -255,6 +272,14 @@ Auth-App/
 - **Beautiful Templates**: HTML emails with provider-specific branding
 - **Welcome Emails**: Sent automatically after successful verification
 
+### Password Reset System
+- **Secure Tokens**: 32-byte cryptographically secure random tokens
+- **Token Expiration**: Reset links expire after 1 hour for security
+- **Single-Use Tokens**: Tokens are cleared after successful password reset
+- **Email Verification Required**: Only verified accounts can request password reset
+- **Professional Templates**: Beautiful HTML email templates with security warnings
+- **Account Status Check**: Only active accounts can reset passwords
+
 ## 👥 User Roles
 
 ### Regular Users
@@ -264,6 +289,7 @@ Auth-App/
   - Update name, email, and password
   - View account status, email verification status, and join date
   - Request new verification emails if needed
+  - Reset password via secure email link
   - Logout functionality
 
 ### Administrators
@@ -301,8 +327,9 @@ Auth-App/
 
 - **Password Hashing**: Bcrypt with salt rounds of 12
 - **Email Verification**: Required for all new accounts (including OAuth)
-- **Secure Tokens**: Cryptographically secure verification tokens
-- **Token Expiration**: 24-hour expiration for verification tokens
+- **Password Reset Security**: Secure token-based password reset with 1-hour expiration
+- **Secure Tokens**: Cryptographically secure verification and reset tokens
+- **Token Expiration**: 24-hour expiration for verification tokens, 1-hour for reset tokens
 - **Session Security**: HTTP-only cookies with secure flags
 - **Automatic Logout**: Inactive users are immediately logged out
 - **SQL Injection Prevention**: Parameterized queries via Drizzle ORM
@@ -310,6 +337,7 @@ Auth-App/
 - **CSRF Protection**: Built-in SvelteKit CSRF protection
 - **Role-Based Access**: Strict route protection based on user roles
 - **OAuth Security**: Email verification required even for OAuth users
+- **Single-Use Tokens**: Password reset tokens are cleared after successful use
 
 ## 📝 API Endpoints
 
@@ -326,6 +354,12 @@ Auth-App/
 - `GET /auth/verify-email` - Verify email address
 - `GET /auth/verification-pending` - Verification pending page
 - `POST /auth/resend-verification` - Resend verification email
+
+### Password Reset
+- `GET /auth/forgot-password` - Password reset request page
+- `POST /auth/forgot-password` - Request password reset email
+- `GET /auth/reset-password` - Password reset form page
+- `POST /auth/reset-password` - Reset password with token
 
 ### User Management
 - `GET /dashboard/user` - Get user profile

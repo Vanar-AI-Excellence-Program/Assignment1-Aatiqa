@@ -49,7 +49,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
       throw redirect(303, '/dashboard/admin');
     }
 
-    // Check if user exists in users table
+    // User not found in admin table, check if they are a regular user
     const userResult = await db
       .select({
         id: users.id,
@@ -59,21 +59,22 @@ export const load: PageServerLoad = async ({ cookies }) => {
       .where(eq(users.id, userId))
       .limit(1);
 
-    if (userResult.length === 0) {
-      // User not found in either table, invalid session
-      cookies.delete('session', { path: '/' });
-      throw redirect(303, '/signup');
+    if (userResult.length > 0) {
+      // User found in users table
+      // Check if user account is active
+      if (userResult[0].status !== 'active') {
+        // User account is inactive, redirect to signup with message
+        cookies.delete('session', { path: '/' });
+        throw redirect(303, '/signup?error=account_inactive');
+      }
+      
+      // User is a regular user, redirect to user dashboard
+      throw redirect(303, '/dashboard/user');
     }
 
-    // Check if user account is active
-    if (userResult[0].status !== 'active') {
-      // User account is inactive, redirect to signup with message
-      cookies.delete('session', { path: '/' });
-      throw redirect(303, '/signup?error=account_inactive');
-    }
-
-    // User is a regular user, redirect to user dashboard
-    throw redirect(303, '/dashboard/user');
+    // User not found in either table, invalid session
+    cookies.delete('session', { path: '/' });
+    throw redirect(303, '/signup');
 
   } catch (err: any) {
     console.error('Dashboard routing error:', err);

@@ -1,6 +1,6 @@
 import { error, redirect, fail } from '@sveltejs/kit';
 import { db } from '$lib/db';
-import { admin, sessions } from '../../../db/schema';
+import { admin, sessions, users } from '../../../db/schema';
 import { eq } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 
@@ -32,6 +32,20 @@ export const load: PageServerLoad = async ({ cookies }) => {
 
     if (!userId) {
       throw redirect(303, '/signup/login');
+    }
+
+    // First check if user exists in users table - if they do, they are NOT an admin
+   const userCheck = await db
+      .select({
+        id: users.id
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (userCheck.length > 0) {
+      // User exists in users table, they are NOT an admin - redirect to user dashboard
+      throw redirect(303, '/dashboard/user');
     }
 
     // Get admin data

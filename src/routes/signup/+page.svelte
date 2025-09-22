@@ -3,30 +3,79 @@
   import { enhance } from '$app/forms';
   import { browser } from '$app/environment';
   import { page } from '$app/stores';
+  import { onMount } from 'svelte';
   
   export let form;
 
   let loading = false;
   let successMessage = '';
   let redirectTimer: ReturnType<typeof setTimeout> | null = null;
+  let showUserExistsError = false;
+  let showOAuthError = false;
 
-  // Check for account inactive error from URL params
+  // Check for various error types from URL params
   $: accountInactiveError = $page.url.searchParams.get('error') === 'account_inactive';
+  $: userExistsError = $page.url.searchParams.get('error') === 'user_already_exists';
+  $: oauthError = $page.url.searchParams.get('error')?.startsWith('oauth_') || $page.url.searchParams.get('error')?.startsWith('github_');
+  $: oauthErrorMessage = getOAuthErrorMessage($page.url.searchParams.get('error'));
 
-  // Use the correct path for login page (no trailing slash)
-  function goToSignIn() {
-    console.log('goToSignIn called, navigating to /signup/login');
-    goto('/signup/login');
+  function getOAuthErrorMessage(error: string | null): string {
+    switch (error) {
+      case 'oauth_failed':
+        return 'Google signup failed. Please try again.';
+      case 'oauth_cancelled':
+        return 'Google signup was cancelled. Please try again.';
+      case 'oauth_incomplete':
+        return 'Google signup incomplete. Please ensure you grant all required permissions.';
+      case 'github_failed':
+        return 'GitHub signup failed. Please try again.';
+      case 'github_cancelled':
+        return 'GitHub signup was cancelled. Please try again.';
+      case 'github_incomplete':
+        return 'GitHub signup incomplete. Please ensure you grant all required permissions.';
+      default:
+        return '';
+    }
+  }
+
+  // Handle auto-hide for "user already exists" error
+  $: if (browser && userExistsError) {
+    showUserExistsError = true;
+    setTimeout(() => {
+      showUserExistsError = false;
+    }, 2000);
+  }
+
+  // Handle OAuth error highlighting
+  let oauthTimer: ReturnType<typeof setTimeout> | null = null;
+  
+  // Highlight Google button when OAuth error occurs
+  $: if (browser && oauthError && oauthErrorMessage && oauthErrorMessage.trim() !== '') {
+    showOAuthError = true;
+    
+    // Clear any existing timer
+    if (oauthTimer) {
+      clearTimeout(oauthTimer);
+    }
+    
+    // Stop highlighting after 5 seconds
+    oauthTimer = setTimeout(() => {
+      showOAuthError = false;
+      oauthTimer = null;
+    }, 5000);
   }
 
   // Ensure redirect to dashboard after successful signup
   $: if (browser && form?.success && form?.shouldRedirect) {
-    // Clear any previous timer to avoid multiple redirects
+    // Clearing previous timer to avoid multiple redirects
     if (redirectTimer) {
       clearTimeout(redirectTimer);
     }
+    
+    successMessage = form.message || 'Account created successfully! Please check your email to verify your account.';
     redirectTimer = setTimeout(() => {
-      window.location.href = '/dashboard/user';
+      const redirectUrl = form?.redirectUrl || '/dashboard/user';
+      goto(redirectUrl);
     }, 2000);
   }
 </script>
@@ -64,6 +113,14 @@
           <p>Your account has been deactivated. Please contact support for assistance.</p>
         </div>
       {/if}
+
+
+      {#if userExistsError && showUserExistsError}
+        <div class="error-message auto-hide" class:fade-out={!showUserExistsError}>
+          <p>User already exists. Please sign in instead.</p>
+        </div>
+      {/if}
+
 
       <form 
         method="POST" 
@@ -113,6 +170,37 @@
           {loading ? 'Signing Up...' : 'Sign Up'}
         </button>
       </form>
+
+      <!-- Divider -->
+      <div class="divider">
+        <span>or</span>
+      </div>
+
+      <!-- OAuth Signup Options -->
+      <div class="oauth-container">
+        <!-- Google OAuth Signup -->
+        <form method="POST" action="?/googleSignup" class="oauth-form">
+          <button type="submit" class="google-btn" class:highlight-google={showOAuthError && oauthError} disabled={loading}>
+            <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Continue with Google
+          </button>
+        </form>
+
+        <!-- GitHub OAuth Signup -->
+        <form method="POST" action="?/githubSignup" class="oauth-form">
+          <button type="submit" class="github-btn" disabled={loading}>
+            <svg class="github-icon" viewBox="0 0 24 24" width="20" height="20">
+              <path fill="currentColor" d="M12 0C5.374 0 0 5.373 0 12 0 17.302 3.438 21.8 8.207 23.387c.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+            </svg>
+            Continue with GitHub
+          </button>
+        </form>
+      </div>
     {/if}
     <div class="signin-link">
       Already have an Account?&nbsp;
@@ -123,11 +211,10 @@
 
 <style>
   .signup-container {
-    min-height: 90vh;
+    min-height: 85vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Set the background image from assets/background.jpg (adjust path as needed) */
     background: url('/background.svg') no-repeat center center fixed;
     background-size: cover;
   }
@@ -193,6 +280,121 @@
     cursor: not-allowed;
   }
 
+  /* Divider */
+  .divider {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+    color: #666;
+    font-size: 0.9rem;
+  }
+
+  .divider::before,
+  .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #ddd;
+  }
+
+  .divider span {
+    padding: 0 15px;
+    background: white;
+  }
+
+  /* OAuth Container */
+  .oauth-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .oauth-form {
+    margin: 0;
+  }
+
+  /* Google OAuth Button */
+  .google-btn {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #dadce0;
+    border-radius: 8px;
+    background: white;
+    color: #3c4043;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+  }
+
+  .google-btn:hover:not(:disabled) {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-color: #c0c4c7;
+  }
+
+  .google-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* Highlight Google button when OAuth error occurs */
+  .google-btn.highlight-google {
+    border-color: #4285F4;
+    box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.2);
+    animation: subtle-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes subtle-pulse {
+    0%, 100% { 
+      box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.2);
+    }
+    50% { 
+      box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.4);
+    }
+  }
+
+  .google-icon {
+    flex-shrink: 0;
+  }
+
+  /* GitHub OAuth Button */
+  .github-btn {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #30363d;
+    border-radius: 8px;
+    background: #24292f;
+    color: white;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+  }
+
+  .github-btn:hover:not(:disabled) {
+    background: #32383f;
+    border-color: #444c56;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+
+  .github-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .github-icon {
+    flex-shrink: 0;
+  }
+
   .error-message {
     color: #c0392b;
     background: #ffeaea;
@@ -201,6 +403,15 @@
     padding: 0.8rem;
     font-size: 0.98rem;
     margin-bottom: 1rem;
+  }
+
+  .auto-hide {
+    opacity: 1;
+    transition: opacity 0.5s ease-out;
+  }
+
+  .auto-hide.fade-out {
+    opacity: 0;
   }
 
   .success-message {

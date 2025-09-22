@@ -90,11 +90,11 @@
 
   .users-container {
     width: 100%;
-    height: 100%; /* Use full height of parent container */
+    height: 100%;
     display: flex;
     flex-direction: column;
     overflow: hidden; /* Prevent whole page from scrolling */
-    padding: 0; /* Remove padding since parent already has padding */
+    padding: 0; 
     position: relative; /* Ensure proper positioning context */
   }
 
@@ -102,7 +102,7 @@
     text-align: center;
     margin-bottom: 30px;
     margin-top:0px;
-    flex-shrink: 0; /* Don't shrink this section */
+    flex-shrink: 0;
   }
 
   .users-header h1 {
@@ -121,7 +121,7 @@
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 20px;
     margin-bottom: 40px;
-    flex-shrink: 0; /* Don't shrink this section */
+    flex-shrink: 0; 
   }
 
   .stat-card {

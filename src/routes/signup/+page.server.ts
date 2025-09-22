@@ -4,6 +4,8 @@ import bcrypt from 'bcryptjs';
 import { db } from '$lib/db';
 import { users } from '../../db/schema';
 import { createSession } from '$lib/session';
+import { getGoogleAuthUrl, getGitHubAuthUrl } from '$lib/auth';
+import { sendVerificationEmail, generateVerificationToken, generateVerificationExpiry } from '$lib/email';
 import type { Actions, RequestEvent } from '@sveltejs/kit';
 
 export const actions: Actions = {
@@ -70,7 +72,11 @@ export const actions: Actions = {
         });
       }
 
-      // Insert new user
+      // Generate verification token
+      const verificationToken = generateVerificationToken();
+      const verificationExpires = generateVerificationExpiry();
+
+      // Insert new user (unverified)
       let newUser;
       try {
         newUser = await db
@@ -79,7 +85,10 @@ export const actions: Actions = {
             name,
             email,
             password: hashedPassword,
-            status: 'active'
+            status: 'active',
+            emailVerified: false,
+            verificationToken,
+            verificationExpires,
           })
           .returning({ id: users.id, name: users.name, email: users.email });
       } catch (insertErr: any) {
@@ -107,27 +116,23 @@ export const actions: Actions = {
         });
       }
 
-      // Create session for the new user
+      // Send verification email
       try {
-        await createSession(newUser[0].id, cookies);
-        
-        // Return success message instead of immediate redirect
-        return {
-          success: true,
-          message: 'Account created successfully! Redirecting to your dashboard...',
-          user: newUser[0],
-          shouldRedirect: true
-        };
-      } catch (sessionError) {
-        console.error('Session creation failed:', sessionError);
-        // If session creation fails, still return success but ask user to login
-        return {
-          success: true,
-          message: 'Account created successfully! Please login to continue.',
-          user: newUser[0],
-          shouldRedirect: false
-        };
+        await sendVerificationEmail(newUser[0].email, newUser[0].name, verificationToken, 'local');
+        console.log('Verification email sent successfully');
+      } catch (emailError) {
+        console.error('Failed to send verification email:', emailError);
+        // Continue with signup but notify user
       }
+
+      // Return success message and redirect to verification pending
+      return {
+        success: true,
+        message: 'Account created successfully! Please check your email to verify your account.',
+        user: newUser[0],
+        shouldRedirect: true,
+        redirectUrl: `/auth/verification-pending?email=${encodeURIComponent(newUser[0].email)}&provider=local`
+      };
 
     } catch (error: any) {
       // More detailed error logging for Drizzle query errors
@@ -151,6 +156,60 @@ export const actions: Actions = {
         error: 'Something went wrong. Please try again.',
         name,
         email
+      });
+    }
+  },
+
+  googleSignup: async () => {
+    try {
+      // Generate Google OAuth URL
+      const googleAuthUrl = getGoogleAuthUrl();
+      // Redirect to Google OAuth
+      throw redirect(303, googleAuthUrl);
+    } catch (error: any) {
+      // If it's a redirect, re-throw it (this is normal SvelteKit behavior)
+      if (error?.status === 303) {
+        throw error;
+      }
+      
+      console.error('Google signup error:', error);
+      
+      // Check if it's a missing environment variable error
+      if (error.message?.includes('environment variable')) {
+        return fail(500, {
+          error: 'Google OAuth is not configured. Please check server configuration.'
+        });
+      }
+      
+      return fail(500, {
+        error: `Failed to initiate Google signup: ${error.message || 'Unknown error'}`
+      });
+    }
+  },
+
+  githubSignup: async () => {
+    try {
+      // Generate GitHub OAuth URL
+      const githubAuthUrl = getGitHubAuthUrl();
+      // Redirect to GitHub OAuth
+      throw redirect(303, githubAuthUrl);
+    } catch (error: any) {
+      // If it's a redirect, re-throw it (this is normal SvelteKit behavior)
+      if (error?.status === 303) {
+        throw error;
+      }
+      
+      console.error('GitHub signup error:', error);
+      
+      // Check if it's a missing environment variable error
+      if (error.message?.includes('environment variable')) {
+        return fail(500, {
+          error: 'GitHub OAuth is not configured. Please check server configuration.'
+        });
+      }
+      
+      return fail(500, {
+        error: `Failed to initiate GitHub signup: ${error.message || 'Unknown error'}`
       });
     }
   }

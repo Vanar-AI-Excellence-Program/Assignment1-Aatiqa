@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
   const sessionToken = cookies.get('session');
   
   if (!sessionToken) {
-    throw redirect(303, '/signup/login');
+    throw redirect(303, '/signup');
   }
 
   try {
@@ -23,15 +23,15 @@ export const load: PageServerLoad = async ({ cookies }) => {
       .limit(1);
 
     if (sessionResult.length === 0) {
-      // Invalid session, redirect to login
+      // Invalid session, redirect to signup
       cookies.delete('session', { path: '/' });
-      throw redirect(303, '/signup/login');
+      throw redirect(303, '/signup');
     }
 
     const userId = sessionResult[0].userId;
 
     if (!userId) {
-      throw redirect(303, '/signup/login');
+      throw redirect(303, '/signup');
     }
 
     // Get user data from the users table
@@ -49,13 +49,26 @@ export const load: PageServerLoad = async ({ cookies }) => {
       .limit(1);
 
     if (userResult.length === 0) {
-      // User not found, redirect to login
+      // User not found, redirect to signup
       cookies.delete('session', { path: '/' });
-      throw redirect(303, '/signup/login');
+      throw redirect(303, '/signup');
+    }
+
+    const user = userResult[0];
+
+    // Check if user is inactive - if so, delete session and redirect
+    if (user.status === 'inactive') {
+      // Delete the session since user is deactivated
+      await db
+        .delete(sessions)
+        .where(eq(sessions.token, sessionToken));
+      
+      cookies.delete('session', { path: '/' });
+      throw redirect(303, '/signup/login?message=Your account has been deactivated. Please contact support.');
     }
 
     return {
-      user: userResult[0]
+      user: user
     };
 
   } catch (err: any) {
@@ -66,8 +79,8 @@ export const load: PageServerLoad = async ({ cookies }) => {
       throw err;
     }
     
-    // For other errors, redirect to login
-    throw redirect(303, '/signup/login');
+    // For other errors, redirect to signup
+    throw redirect(303, '/signup');
   }
 };
 
@@ -76,7 +89,7 @@ export const actions: Actions = {
     const sessionToken = cookies.get('session');
     
     if (!sessionToken) {
-      throw redirect(303, '/signup/login');
+      throw redirect(303, '/signup');
     }
 
     try {
@@ -90,13 +103,34 @@ export const actions: Actions = {
         .limit(1);
 
       if (sessionResult.length === 0) {
-        throw redirect(303, '/signup/login');
+        throw redirect(303, '/signup');
       }
 
       const userId = sessionResult[0].userId;
 
       if (!userId) {
-        throw redirect(303, '/signup/login');
+        throw redirect(303, '/signup');
+      }
+
+      // Verify user exists and is active
+      const userCheck = await db
+        .select({ status: users.status })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (userCheck.length === 0) {
+        throw redirect(303, '/signup');
+      }
+
+      if (userCheck[0].status === 'inactive') {
+        // Delete the session since user is deactivated
+        await db
+          .delete(sessions)
+          .where(eq(sessions.token, sessionToken));
+        
+        cookies.delete('session', { path: '/' });
+        throw redirect(303, '/signup/login?message=Your account has been deactivated. Please contact support.');
       }
 
       // Get form data

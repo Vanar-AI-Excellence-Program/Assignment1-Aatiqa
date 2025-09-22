@@ -34,6 +34,20 @@ export const load: PageServerLoad = async ({ cookies }) => {
       throw redirect(303, '/signup/login');
     }
 
+    // First check if user exists in users table - if they do, they are NOT an admin
+    const userCheck = await db
+      .select({
+        id: users.id
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (userCheck.length > 0) {
+      // User exists in users table, they are NOT an admin - redirect to user dashboard
+      throw redirect(303, '/dashboard/user');
+    }
+
     // Verify user is an admin
     const adminResult = await db
       .select({
@@ -103,6 +117,20 @@ export const actions: Actions = {
         throw redirect(303, '/signup/login');
       }
 
+      // First check if user exists in users table - if they do, they are NOT an admin
+      const userCheck = await db
+        .select({
+          id: users.id
+        })
+        .from(users)
+        .where(eq(users.id, adminId))
+        .limit(1);
+
+      if (userCheck.length > 0) {
+        // User exists in users table, they are NOT an admin - redirect to user dashboard
+        throw redirect(303, '/dashboard/user');
+      }
+
       // Verify user is an admin
       const adminResult = await db
         .select({
@@ -116,7 +144,7 @@ export const actions: Actions = {
         throw redirect(303, '/dashboard/user');
       }
 
-      // Get form data
+     // Get form data
       const data = await request.formData();
       const userId = parseInt(data.get('userId') as string);
       const newStatus = data.get('status') as string;
@@ -143,9 +171,16 @@ export const actions: Actions = {
         })
         .where(eq(users.id, userId));
 
+      // If user is being deactivated, delete all their active sessions
+      if (newStatus === 'inactive') {
+        await db
+          .delete(sessions)
+          .where(eq(sessions.userId, userId));
+      }
+
       return {
         success: true,
-        message: `User status updated to ${newStatus} successfully!`,
+        message: `User status updated to ${newStatus} successfully!${newStatus === 'inactive' ? ' User has been logged out from all devices.' : ''}`,
         userId,
         newStatus
       };

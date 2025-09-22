@@ -34,6 +34,20 @@ export const load: PageServerLoad = async ({ cookies }) => {
       throw redirect(303, '/signup/login');
     }
 
+    // First check if user exists in users table - if they do, they are NOT an admin
+    const userCheck = await db
+      .select({
+        id: users.id
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (userCheck.length > 0) {
+      // User exists in users table, they are NOT an admin - redirect to user dashboard
+      throw redirect(303, '/dashboard/user');
+    }
+
     // Verify user is an admin
     const adminResult = await db
       .select({

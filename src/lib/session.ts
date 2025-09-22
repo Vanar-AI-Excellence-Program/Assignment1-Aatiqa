@@ -25,7 +25,7 @@ export async function createSession(userId: number, cookies: Cookies): Promise<s
       path: '/',
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax', // Changed from 'strict' to 'lax' for OAuth compatibility
       maxAge: 60 * 60 * 24 * 30 // 30 days
     });
 

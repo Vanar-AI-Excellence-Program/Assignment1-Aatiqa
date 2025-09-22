@@ -150,6 +150,11 @@
       </button>
     </form>
 
+    <!-- Forgot Password Link -->
+    <div class="forgot-password-link">
+      <a href="/auth/forgot-password" class="forgot-link">Forgot your password?</a>
+    </div>
+
     <!-- OAuth Login Options -->
     <div class="oauth-divider">
       <span>or</span>
@@ -253,6 +258,24 @@
   .login-btn:disabled {
     background: #b9aaff;
     cursor: not-allowed;
+  }
+
+  .forgot-password-link {
+    text-align: center;
+    margin-top: 1rem;
+  }
+
+  .forgot-link {
+    color: #6c47ff;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color 0.18s;
+  }
+
+  .forgot-link:hover {
+    color: #4b2bb3;
+    text-decoration: underline;
   }
   .error-message {
     color: #c0392b;

@@ -26,6 +26,18 @@ export function generateVerificationExpiry(): Date {
   return expiry;
 }
 
+// Generate password reset token
+export function generatePasswordResetToken(): string {
+  return randomBytes(32).toString('hex');
+}
+
+// Generate password reset expiry (1 hour from now)
+export function generatePasswordResetExpiry(): Date {
+  const expiry = new Date();
+  expiry.setHours(expiry.getHours() + 1); // 1 hour from now
+  return expiry;
+}
+
 // Send verification email
 export async function sendVerificationEmail(
   email: string, 
@@ -266,5 +278,149 @@ export async function sendWelcomeEmail(
   } catch (error) {
     console.error('Error sending welcome email:', error);
     // Don't throw error for welcome email - it's not critical
+  }
+}
+
+// Send password reset email
+export async function sendPasswordResetEmail(
+  email: string, 
+  name: string, 
+  token: string
+): Promise<void> {
+  const transporter = createEmailTransporter();
+  
+  const resetUrl = `${process.env.ORIGIN || 'http://localhost:5173'}/auth/reset-password?token=${token}`;
+  
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Reset Your Password</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+        }
+        .header {
+          background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+          color: white;
+          padding: 30px;
+          text-align: center;
+          border-radius: 10px 10px 0 0;
+        }
+        .content {
+          background: #f8f9fa;
+          padding: 30px;
+          border-radius: 0 0 10px 10px;
+        }
+        .button {
+          display: inline-block;
+          background: #dc3545;
+          color: white;
+          padding: 15px 30px;
+          text-decoration: none;
+          border-radius: 5px;
+          margin: 20px 0;
+          font-weight: bold;
+        }
+        .button:hover {
+          background: #c82333;
+        }
+        .footer {
+          text-align: center;
+          margin-top: 20px;
+          font-size: 12px;
+          color: #666;
+        }
+        .security-notice {
+          background: #fff3cd;
+          border: 1px solid #ffeaa7;
+          border-radius: 5px;
+          padding: 15px;
+          margin: 20px 0;
+        }
+        .warning-icon {
+          color: #856404;
+          font-weight: bold;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>🔒 Reset Your Password</h1>
+        <p>Secure password reset request</p>
+      </div>
+      
+      <div class="content">
+        <h2>Hello ${name}!</h2>
+        
+        <p>We received a request to reset your password. If you made this request, click the button below to reset your password:</p>
+        
+        <p style="text-align: center;">
+          <a href="${resetUrl}" class="button">🔑 Reset Password</a>
+        </p>
+        
+        <div class="security-notice">
+          <p><span class="warning-icon">⚠️</span> <strong>Security Notice:</strong></p>
+          <ul>
+            <li>This link will expire in 1 hour for security reasons</li>
+            <li>If you didn't request this reset, please ignore this email</li>
+            <li>Your password will remain unchanged until you click the link</li>
+            <li>For your security, this link can only be used once</li>
+          </ul>
+        </div>
+        
+        <hr style="border: none; height: 1px; background: #ddd; margin: 20px 0;">
+        
+        <p style="font-size: 14px; color: #666;">
+          If the button doesn't work, copy and paste this link into your browser:<br>
+          <code style="background: #e9ecef; padding: 5px; border-radius: 3px; word-break: break-all;">
+            ${resetUrl}
+          </code>
+        </p>
+      </div>
+      
+      <div class="footer">
+        <p>If you didn't request a password reset, you can safely ignore this email.</p>
+        <p>© 2024 Your App Name. All rights reserved.</p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const textContent = `
+    Hello ${name}!
+
+    We received a request to reset your password. If you made this request, click the link below to reset your password:
+    ${resetUrl}
+    
+    This link will expire in 1 hour for security reasons.
+    
+    If you didn't request this reset, please ignore this email. Your password will remain unchanged.
+    
+    Best regards,
+    Your App Team
+  `;
+
+  const mailOptions = {
+    from: `"Your App" <${process.env.SMTP_USER}>`,
+    to: email,
+    subject: '🔒 Reset your password - Secure request',
+    text: textContent,
+    html: htmlContent,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Password reset email sent to ${email}`);
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    throw new Error('Failed to send password reset email');
   }
 }

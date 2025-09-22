@@ -114,7 +114,6 @@
         </div>
       {/if}
 
-
       {#if userExistsError && showUserExistsError}
         <div class="error-message auto-hide" class:fade-out={!showUserExistsError}>
           <p>User already exists. Please sign in instead.</p>

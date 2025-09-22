@@ -72,7 +72,6 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
       if (!user.emailVerified) {
         throw redirect(303, '/signup/login?message=Please verify your email before logging in. Check your inbox for the verification link.');
       }
-
       userId = user.id;
     } else {
       // SIGNUP CONTEXT: Create new user or show error if exists

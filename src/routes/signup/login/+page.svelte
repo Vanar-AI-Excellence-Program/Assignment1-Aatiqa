@@ -16,7 +16,6 @@
   onMount(() => {
     const error = $page.url.searchParams.get('error');
     const message = $page.url.searchParams.get('message');
-    
     if (error) {
       errorMessage = getErrorMessage(error);
       showError = true;
@@ -98,6 +97,12 @@
             </a>
           </div>
         {/if}
+      </div>
+    {/if}
+    
+    {#if errorMessage}
+      <div class="error-message auto-hide" class:fade-out={!showError}>
+        <p>{errorMessage}</p>
       </div>
     {/if}
     

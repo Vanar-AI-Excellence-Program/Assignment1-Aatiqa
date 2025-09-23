@@ -1,9 +1,66 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import { browser } from '$app/environment';
+  import { goto } from '$app/navigation';
+
   let menuItems = [
     { name: "My Profile", path: "/dashboard/admin/" },
     { name: "Users Info", path: "/dashboard/admin/users" },
     { name: "Settings", path: "/dashboard/admin/settings" }
   ];
+
+  let currentUserId: number | null = null;
+  let isAuthenticated = false;
+
+  // Check authentication status and detect user changes
+  async function checkAuthStatus() {
+    if (!browser) return;
+    
+    try {
+      const response = await fetch('/api/auth/status');
+      if (response.ok) {
+        const authData = await response.json();
+        const newIsAuthenticated = authData.isAuthenticated;
+        const newUserId = authData.userId || null;
+        
+        // Check if user has changed (different userId or authentication status changed)
+        const userChanged = (currentUserId !== newUserId) || (isAuthenticated !== newIsAuthenticated);
+        
+        // If user changed or not authenticated, redirect to login
+        if (!newIsAuthenticated) {
+          goto('/signup/login');
+          return;
+        }
+        
+        // If user changed (different admin logged in), reload the page to clear cached data
+        if (userChanged && currentUserId !== null) {
+          window.location.reload();
+          return;
+        }
+        
+        // Update current state
+        isAuthenticated = newIsAuthenticated;
+        currentUserId = newUserId;
+      } else {
+        // Auth check failed, redirect to login
+        goto('/signup/login');
+      }
+    } catch (err) {
+      console.error('Failed to check auth status:', err);
+      // On error, redirect to login
+      goto('/signup/login');
+    }
+  }
+
+  // Initial auth check and periodic monitoring
+  onMount(() => {
+    checkAuthStatus();
+    
+    // Check auth status every 30 seconds to detect user changes
+    const interval = setInterval(checkAuthStatus, 30000);
+    
+    return () => clearInterval(interval);
+  });
 </script>
 
 <style>

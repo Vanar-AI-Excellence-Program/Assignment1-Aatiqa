@@ -1,5 +1,5 @@
 import { db } from './db';
-import { sessions } from '../db/schema';
+import { sessions, users, admin } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { randomBytes } from 'crypto';
 import type { Cookies } from '@sveltejs/kit';
@@ -55,6 +55,62 @@ export async function getUserFromSession(token: string) {
     return sessionResult[0];
   } catch (error) {
     console.error('Failed to get user from session:', error);
+    return null;
+  }
+}
+
+// Get user details including user type (admin or regular user)
+export async function getUserWithType(token: string) {
+  try {
+    const sessionResult = await db
+      .select({
+        userId: sessions.userId,
+        createdAt: sessions.createdAt
+      })
+      .from(sessions)
+      .where(eq(sessions.token, token))
+      .limit(1);
+
+    if (sessionResult.length === 0) {
+      return null;
+    }
+
+    const userId = sessionResult[0].userId;
+
+    // Check if user exists in admin table
+    const adminCheck = await db
+      .select({ id: admin.id })
+      .from(admin)
+      .where(eq(admin.id, userId))
+      .limit(1);
+
+    if (adminCheck.length > 0) {
+      return {
+        userId,
+        userType: 'admin' as const,
+        createdAt: sessionResult[0].createdAt
+      };
+    }
+
+    // Check if user exists in users table
+    const userCheck = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (userCheck.length > 0) {
+      return {
+        userId,
+        userType: 'user' as const,
+        createdAt: sessionResult[0].createdAt
+      };
+    }
+
+    // User not found in either table
+    return null;
+  } catch (error) {
+    console.error('Failed to get user with type from session:', error);
     return null;
   }
 }

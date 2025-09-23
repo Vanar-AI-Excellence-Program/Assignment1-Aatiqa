@@ -36,6 +36,27 @@
       "when": 1758525266330,
       "tag": "0004_many_lady_vermin",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1758604326954,
+      "tag": "0005_sloppy_gwen_stacy",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1758606050432,
+      "tag": "0006_skinny_thanos",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1758606572269,
+      "tag": "0007_careless_paibok",
+      "breakpoints": true
     }
   ]
 }

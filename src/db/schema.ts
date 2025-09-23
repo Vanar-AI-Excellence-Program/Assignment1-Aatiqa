@@ -31,3 +31,32 @@ export const sessions = pgTable("sessions", {
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const conversations = pgTable("conversations", {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    userId: integer().notNull(), // Can be either users.id or admin.id
+    userType: varchar("user_type", { length: 10 }).notNull().default("user"), // 'user' or 'admin'
+    title: varchar("title", { length: 255 }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const messages = pgTable("messages", {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    conversationId: integer().notNull().references(() => conversations.id, { onDelete: 'cascade' }),
+    parentMessageId: integer(), // References messages.id for tree structure, null for root messages
+    branchId: varchar("branch_id", { length: 50 }).notNull().default("main"), // Branch identifier
+    role: varchar("role", { length: 20 }).notNull(), // 'user' or 'assistant'
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const conversationBranches = pgTable("conversation_branches", {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    conversationId: integer().notNull().references(() => conversations.id, { onDelete: 'cascade' }),
+    branchId: varchar("branch_id", { length: 50 }).notNull(), // Unique identifier for the branch
+    branchName: varchar("branch_name", { length: 100 }), // Human-readable name
+    parentMessageId: integer(), // Message from which this branch was forked
+    isMainBranch: boolean("is_main_branch").notNull().default(false),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+

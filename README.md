@@ -35,12 +35,20 @@ A comprehensive authentication and authorization system built with SvelteKit, Ty
 - **Security** - 24-hour verification token expiration, 1-hour password reset token expiration
 
 ### AI Chat Features
-- **Floating Chat Widget** - Always-accessible AI assistant in bottom-right corner
+- **Floating Chat Widget** - Always-accessible AI assistant in bottom-right corner for all users
 - **Real-time Streaming** - Live AI responses powered by Google Gemini API
 - **Modern Chat UI** - Beautiful message bubbles with user messages in dark blue and AI responses in light grey
+- **Tree-Structured Conversations** - Fork conversations from any message to explore different paths
+- **Conversation Branching** - Create multiple branches from any point in the conversation
+- **Branch Management** - Visual branch selector with icons (🌟 for main, 🌿 for branches)
+- **Conversation History** - Persistent chat history for authenticated users (both regular users and admins)
+- **Guest Mode Support** - Non-authenticated users can chat but conversations aren't saved
+- **User Isolation** - Each user sees only their own conversations and branches
+- **Auto User Switching Protection** - Automatically clears data when switching between different user accounts
 - **Scrollable Chat** - Smooth scrolling through conversation history
 - **Auto-scroll** - Automatically scrolls to new messages
-- **Chat Controls** - Clear chat history and close chat functionality
+- **Chat Controls** - Clear chat history, create new conversations, and close chat functionality
+- **Fork Functionality** - Click "Fork" on any assistant message to create new conversation branches
 - **Responsive Design** - Works perfectly on desktop and mobile devices
 
 ### UI/UX Features
@@ -77,9 +85,9 @@ Auth-App/
 │   │   ├── components/
 │   │   │   ├── Footer.svelte      # Footer component
 │   │   │   ├── Navbar.svelte      # Navigation bar
-│   │   │   ├── FloatingChatWidget.svelte # AI chat floating widget
-│   │   │   ├── ChatContainer.svelte      # Chat messages container
-│   │   │   ├── ChatMessage.svelte        # Individual chat message component
+│   │   │   ├── FloatingChatWidget.svelte # AI chat floating widget with branching support
+│   │   │   ├── ChatContainer.svelte      # Chat messages container with fork functionality
+│   │   │   ├── ChatMessage.svelte        # Individual chat message component with fork buttons
 │   │   │   └── ChatInput.svelte          # Chat input field component
 │   │   ├── auth.ts                # OAuth utility functions
 │   │   ├── db.ts                  # Database connection utility
@@ -87,7 +95,15 @@ Auth-App/
 │   │   └── session.ts             # Session management utilities
 │   ├── routes/
 │   │   ├── api/
-│   │   │   └── chat/              # AI chat API endpoint
+│   │   │   ├── auth/
+│   │   │   │   └── status/        # Authentication status API
+│   │   │   ├── chat/              # AI chat API endpoint with branching support
+│   │   │   └── conversations/     # Conversation management APIs
+│   │   │       ├── [id]/
+│   │   │       │   ├── messages/  # Get messages for specific conversation/branch
+│   │   │       │   ├── branches/  # Get all branches for a conversation
+│   │   │       │   └── fork/      # Fork conversation from specific message
+│   │   │       └── +server.ts     # Get/delete conversations
 │   │   ├── auth/
 │   │   │   ├── callback/          # OAuth callback handlers
 │   │   │   │   ├── google/        # Google OAuth callback
@@ -144,9 +160,35 @@ Auth-App/
 
 ### Sessions Table
 - `id` - Primary key (auto-increment)
-- `userId` - Foreign key to users/admin
+- `userId` - Foreign key to users/admin (supports both user types)
 - `token` - Secure session token
 - `createdAt` - Session creation timestamp
+
+### Conversations Table
+- `id` - Primary key (auto-increment)
+- `userId` - User/admin ID who owns the conversation
+- `userType` - Type of user ('user' or 'admin') for proper isolation
+- `title` - Conversation title (auto-generated from first message)
+- `createdAt` - Conversation creation timestamp
+- `updatedAt` - Last modification timestamp
+
+### Messages Table
+- `id` - Primary key (auto-increment)
+- `conversationId` - Foreign key to conversations
+- `parentMessageId` - Parent message ID for tree structure (nullable for root messages)
+- `branchId` - Branch identifier for conversation branching (default: 'main')
+- `role` - Message role ('user' or 'assistant')
+- `content` - Message content
+- `createdAt` - Message creation timestamp
+
+### Conversation Branches Table
+- `id` - Primary key (auto-increment)
+- `conversationId` - Foreign key to conversations
+- `branchId` - Unique branch identifier
+- `branchName` - Human-readable branch name
+- `parentMessageId` - Message from which this branch was forked
+- `isMainBranch` - Boolean flag for main branch identification
+- `createdAt` - Branch creation timestamp
 
 ## 🚀 Getting Started
 
@@ -318,6 +360,9 @@ Auth-App/
   - Access user management page with all user data
   - Control user account statuses (activate/deactivate)
   - **Automatic session termination** when deactivating users
+  - **Full AI Chat Access** - Complete chat functionality with conversation history
+  - **Isolated Chat Data** - Admin conversations are separate from regular users
+  - **Auto User Switching Protection** - Data automatically clears when switching admin accounts
   - View system statistics and user counts
   - View email verification status for all users
   - All regular user capabilities
@@ -391,8 +436,14 @@ Auth-App/
 - `GET /dashboard/admin/settings` - Get users for status management
 - `POST /dashboard/admin/settings` - Update user status
 
-### AI Chat
-- `POST /api/chat` - AI chat endpoint with streaming responses
+### AI Chat & Conversations
+- `POST /api/chat` - AI chat endpoint with streaming responses and branching support
+- `GET /api/auth/status` - Get current user authentication status and user type
+- `GET /api/conversations` - Get all conversations for authenticated user
+- `DELETE /api/conversations` - Delete a conversation
+- `GET /api/conversations/[id]/messages?branchId=main` - Get messages for specific conversation branch
+- `GET /api/conversations/[id]/branches` - Get all branches for a conversation
+- `POST /api/conversations/[id]/fork` - Fork conversation from a specific message
 
 ## 🤝 Contributing
 
@@ -427,6 +478,33 @@ To enable the AI chat functionality:
    ```
 
 The AI chat widget will appear as a floating button in the bottom-right corner of your application. Click it to start chatting with the AI assistant!
+
+## 🌳 Tree-Structured Chat System
+
+### How It Works
+
+The application features an advanced tree-structured conversation system that allows users to explore multiple conversation paths:
+
+1. **Linear Conversations**: Start with normal chat on the "main" branch
+2. **Forking**: Click the "Fork" button on any assistant message to create a new branch
+3. **Branch Navigation**: Use the branch selector in the sidebar to switch between different conversation paths
+4. **Message Threading**: Each branch shows messages from the root up to the fork point plus branch-specific messages
+
+### Key Features
+
+- **Fork from Any Point**: Create new conversation branches from any assistant message
+- **Visual Branch Management**: Branch selector with icons (🌟 for main branch, 🌿 for other branches)
+- **Automatic Branch Naming**: Default names generated, with option to customize
+- **Persistent Branch History**: All branches are saved and can be revisited
+- **User Isolation**: Each user (regular/admin) sees only their own conversation trees
+- **Guest Mode**: Non-authenticated users can chat but conversations aren't saved
+
+### Usage Examples
+
+1. **Exploring Different Approaches**: Fork from an AI response to ask follow-up questions in different directions
+2. **Comparing Solutions**: Create multiple branches to explore various problem-solving approaches
+3. **Conversation Recovery**: If a conversation goes off-track, switch back to an earlier branch
+4. **Research and Development**: Maintain separate branches for different aspects of a topic
 
 ## 🙏 Acknowledgments
 
